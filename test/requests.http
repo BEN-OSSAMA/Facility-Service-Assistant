@@ -1,0 +1,191 @@
+@baseUrl = http://localhost:4004/facility
+
+
+############################################################
+# 0. CHECK SERVICE
+############################################################
+
+GET {{baseUrl}}/$metadata
+Accept: application/xml
+
+
+############################################################
+# 1. FIND EQUIPMENT BY ID
+#
+# Expected:
+# EQ-101 - Epson laser projector
+############################################################
+
+GET {{baseUrl}}/findEquipment(equipmentId='EQ-101',room='')
+Accept: application/json
+
+
+############################################################
+# 2. FIND EQUIPMENT BY ROOM
+#
+# Expected:
+# Two equipments:
+# - EQ-101 Projector
+# - EQ-105 Screen
+############################################################
+
+GET {{baseUrl}}/findEquipment(equipmentId='',room='Meeting%20room%20B2')
+Accept: application/json
+
+
+############################################################
+# 3. GET EQUIPMENT HISTORY
+#
+# Expected:
+# TK-5003
+# Lamp flickering
+# Closed
+############################################################
+
+GET {{baseUrl}}/getEquipmentHistory(equipmentId='EQ-101')
+Accept: application/json
+
+
+############################################################
+# 4. GET TICKET STATUS
+#
+# Expected:
+# TK-5002
+# Status: InProgress
+# Team: Facilities
+############################################################
+
+GET {{baseUrl}}/getTicketStatus(ticketNumber='TK-5002')
+Accept: application/json
+
+
+############################################################
+# 5. DUPLICATE TICKET TEST
+#
+# EQ-104 already has TK-5002 in progress.
+#
+# Expected:
+# No new ticket
+# ticketNumber = TK-5002
+# created = false
+############################################################
+
+POST {{baseUrl}}/createServiceTicket
+Content-Type: application/json
+Accept: application/json
+
+{
+    "equipmentId": "EQ-104",
+    "problemDescription": "Air conditioning is broken again",
+    "reportedBy": "Test User"
+}
+
+
+############################################################
+# 6. CREATE COFFEE MACHINE TICKET
+#
+# EQ-103:
+# Criticality = Low
+# Type = Coffee machine
+#
+# Expected:
+# New ticket = TK-5004
+# Priority = P3
+# Team = Facilities
+# Target = +5 days
+# created = true
+# No warranty note
+############################################################
+
+POST {{baseUrl}}/createServiceTicket
+Content-Type: application/json
+Accept: application/json
+
+{
+    "equipmentId": "EQ-103",
+    "problemDescription": "Coffee machine is leaking",
+    "reportedBy": "Test User"
+}
+
+
+############################################################
+# 7. UPDATE RESOLVED TICKET
+#
+# TK-5001 is Resolved.
+#
+# Expected:
+# HTTP 409
+# Update refused
+############################################################
+
+POST {{baseUrl}}/updateTicket
+Content-Type: application/json
+Accept: application/json
+
+{
+    "ticketNumber": "TK-5001",
+    "note": "Still jamming",
+    "newPriority": null
+}
+
+
+############################################################
+# 8. CHANGE COFFEE MACHINE TICKET TO P1
+#
+# If test 6 was the first newly-created ticket,
+# its number is TK-5004.
+#
+# Expected:
+# Priority = P1
+# Target date = today
+############################################################
+
+POST {{baseUrl}}/updateTicket
+Content-Type: application/json
+Accept: application/json
+
+{
+    "ticketNumber": "TK-5004",
+    "note": null,
+    "newPriority": "P1"
+}
+
+
+############################################################
+# 9. CREATE PROJECTOR TICKET
+#
+# EQ-101:
+# Criticality = High
+# Type = Projector
+# Warranty until March 2027
+#
+# Expected:
+# Priority = P1
+# Team = AV Support
+# Target = today
+# Warranty note added
+############################################################
+
+POST {{baseUrl}}/createServiceTicket
+Content-Type: application/json
+Accept: application/json
+
+{
+    "equipmentId": "EQ-101",
+    "problemDescription": "Projector will not turn on",
+    "reportedBy": "Test User"
+}
+
+
+############################################################
+# 10. UNKNOWN EQUIPMENT
+#
+# Expected:
+# Empty result []
+#
+# Later the Joule Agent will use this result to ask
+# the employee for another equipment ID or room.
+############################################################
+
+GET {{baseUrl}}/findEquipment(equipmentId='EQ-999',room='')
+Accept: application/json

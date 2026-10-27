@@ -1,0 +1,4 @@
+ticketNumber,equipment_ID,problemDescription,reportedBy,priority,status,assignedTeam_ID
+TK-5001,EQ-102,Paper jam,System,P2,Resolved,TEAM-IT
+TK-5002,EQ-104,Not cooling,System,P2,InProgress,TEAM-FAC
+TK-5003,EQ-101,Lamp flickering,System,P1,Closed,TEAM-AV
