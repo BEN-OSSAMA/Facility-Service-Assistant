@@ -25,6 +25,15 @@ modules:
           srv-url: ${default-url}
     requires:
       - name: facility-service-assistant-auth
+      - name: facility-service-assistant-db
+
+  - name: facility-service-assistant-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: facility-service-assistant-db
 
 resources:
   - name: facility-service-assistant-auth
@@ -40,3 +49,8 @@ resources:
           credential-types:
             - "binding-secret"
             - "x509"
+  - name: facility-service-assistant-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared

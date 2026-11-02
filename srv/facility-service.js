@@ -1,8 +1,8 @@
-const cds = require('@sap/cds');
+import cds from '@sap/cds';
 
 const { SELECT, INSERT, UPDATE } = cds.ql;
 
-module.exports = cds.service.impl(function () {
+export default cds.service.impl(function () {
 
     const {
         Equipment,
@@ -30,7 +30,9 @@ module.exports = cds.service.impl(function () {
      * Return today's date as YYYY-MM-DD.
      */
     function today() {
+
         const date = new Date();
+
         date.setUTCHours(0, 0, 0, 0);
 
         return date.toISOString().slice(0, 10);
@@ -41,10 +43,14 @@ module.exports = cds.service.impl(function () {
      * Add days to today and return YYYY-MM-DD.
      */
     function addDays(days) {
+
         const date = new Date();
 
         date.setUTCHours(0, 0, 0, 0);
-        date.setUTCDate(date.getUTCDate() + days);
+
+        date.setUTCDate(
+            date.getUTCDate() + days
+        );
 
         return date.toISOString().slice(0, 10);
     }
@@ -104,44 +110,52 @@ module.exports = cds.service.impl(function () {
             return null;
         }
 
-        const normalizedType = type.trim().toLowerCase();
+        const normalizedType =
+            type.trim().toLowerCase();
+
 
         if (
             normalizedType === 'projector' ||
             normalizedType === 'screen'
         ) {
+
             return {
                 ID: 'TEAM-AV',
                 name: 'AV Support'
             };
         }
 
+
         if (
             normalizedType === 'printer' ||
             normalizedType === 'pc'
         ) {
+
             return {
                 ID: 'TEAM-IT',
                 name: 'IT Support'
             };
         }
 
+
         if (
             normalizedType === 'air conditioning' ||
             normalizedType === 'coffee machine'
         ) {
+
             return {
                 ID: 'TEAM-FAC',
                 name: 'Facilities'
             };
         }
 
+
         return null;
     }
 
 
     /**
-     * Get the latest note from a notes field.
+     * Get the latest note from the notes field.
      */
     function getLastNote(notes) {
 
@@ -154,6 +168,7 @@ module.exports = cds.service.impl(function () {
             .map(note => note.trim())
             .filter(Boolean);
 
+
         return allNotes.length
             ? allNotes[allNotes.length - 1]
             : null;
@@ -163,13 +178,10 @@ module.exports = cds.service.impl(function () {
     /**
      * Generate the next ticket number.
      *
-     * Example:
      * TK-5001
      * TK-5002
      * TK-5003
-     *
-     * Next:
-     * TK-5004
+     * ...
      */
     async function generateTicketNumber(tx) {
 
@@ -178,11 +190,14 @@ module.exports = cds.service.impl(function () {
                 .columns('ticketNumber')
         );
 
+
         const numbers = tickets
             .map(ticket => {
 
                 const match =
-                    /^TK-(\d+)$/.exec(ticket.ticketNumber);
+                    /^TK-(\d+)$/.exec(
+                        ticket.ticketNumber
+                    );
 
                 return match
                     ? Number(match[1])
@@ -210,7 +225,9 @@ module.exports = cds.service.impl(function () {
             return null;
         }
 
+
         const team = await tx.run(
+
             SELECT.one
                 .from(ServiceTeams)
                 .columns('name')
@@ -218,6 +235,7 @@ module.exports = cds.service.impl(function () {
                     ID: teamId
                 })
         );
+
 
         return team?.name || null;
     }
@@ -274,15 +292,12 @@ module.exports = cds.service.impl(function () {
         } else {
 
             query = query.where({
-                room: room
+                room
             });
         }
 
 
-        const equipment = await tx.run(query);
-
-
-        return equipment;
+        return tx.run(query);
     });
 
 
@@ -312,7 +327,7 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * Verify that the equipment exists.
+         * Verify that equipment exists.
          */
         const equipment = await tx.run(
 
@@ -335,10 +350,6 @@ module.exports = cds.service.impl(function () {
 
         /*
          * Return maximum 5 latest tickets.
-         *
-         * Ticket number is used as ordering because
-         * the provided initial sample tickets do not
-         * contain explicit historical dates.
          */
         const tickets = await tx.run(
 
@@ -390,7 +401,7 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * Validate required inputs.
+         * Input validation.
          */
         if (!equipmentId) {
 
@@ -423,11 +434,8 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * --------------------------------------------------------
-         * Find equipment
-         * --------------------------------------------------------
+         * Find equipment.
          */
-
         const equipment = await tx.run(
 
             SELECT.one
@@ -448,12 +456,10 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * --------------------------------------------------------
-         * RULE 3:
-         * Prevent duplicate active tickets.
-         *
-         * Open / InProgress -> return existing ticket.
-         * --------------------------------------------------------
+         * ========================================================
+         * RULE 3
+         * Prevent duplicate Open / InProgress tickets.
+         * ========================================================
          */
 
         const existingTickets = await tx.run(
@@ -467,7 +473,9 @@ module.exports = cds.service.impl(function () {
 
         const existingActiveTicket =
             existingTickets.find(ticket =>
-                ACTIVE_STATUSES.includes(ticket.status)
+                ACTIVE_STATUSES.includes(
+                    ticket.status
+                )
             );
 
 
@@ -497,7 +505,9 @@ module.exports = cds.service.impl(function () {
                     existingActiveTicket.status,
 
                 note:
-                    getLastNote(existingActiveTicket.notes),
+                    getLastNote(
+                        existingActiveTicket.notes
+                    ),
 
                 created:
                     false
@@ -506,10 +516,10 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * --------------------------------------------------------
-         * RULE 1:
-         * Priority from equipment criticality.
-         * --------------------------------------------------------
+         * ========================================================
+         * RULE 1
+         * Priority from criticality.
+         * ========================================================
          */
 
         const priority =
@@ -527,18 +537,15 @@ module.exports = cds.service.impl(function () {
         }
 
 
-        /*
-         * Calculate target date.
-         */
         const targetDate =
             getTargetDate(priority);
 
 
         /*
-         * --------------------------------------------------------
-         * RULE 2:
-         * Team from equipment type.
-         * --------------------------------------------------------
+         * ========================================================
+         * RULE 2
+         * Service team from equipment type.
+         * ========================================================
          */
 
         const team =
@@ -557,10 +564,10 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * --------------------------------------------------------
-         * RULE 4:
+         * ========================================================
+         * RULE 4
          * Warranty check.
-         * --------------------------------------------------------
+         * ========================================================
          */
 
         let warrantyNote = null;
@@ -577,57 +584,39 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * --------------------------------------------------------
-         * Generate ticket number.
-         * --------------------------------------------------------
+         * Generate new ticket number.
          */
-
         const ticketNumber =
             await generateTicketNumber(tx);
 
 
         /*
-         * --------------------------------------------------------
-         * Create ticket.
-         * --------------------------------------------------------
+         * Create service ticket.
          */
-
         const newTicket = {
 
-            ticketNumber:
-
-                ticketNumber,
+            ticketNumber,
 
             equipment_ID:
-
                 equipment.ID,
 
             problemDescription:
-
                 problemDescription.trim(),
 
             reportedBy:
-
                 reportedBy.trim(),
 
-            priority:
-
-                priority,
+            priority,
 
             status:
-
                 'Open',
 
             assignedTeam_ID:
-
                 team.ID,
 
-            targetDate:
-
-                targetDate,
+            targetDate,
 
             notes:
-
                 warrantyNote
         };
 
@@ -639,22 +628,16 @@ module.exports = cds.service.impl(function () {
         );
 
 
-        /*
-         * Return the information needed by Joule.
-         */
         return {
 
-            ticketNumber:
-                ticketNumber,
+            ticketNumber,
 
-            priority:
-                priority,
+            priority,
 
             assignedTeam:
                 team.name,
 
-            targetDate:
-                targetDate,
+            targetDate,
 
             status:
                 'Open',
@@ -698,7 +681,7 @@ module.exports = cds.service.impl(function () {
             SELECT.one
                 .from(ServiceTickets)
                 .where({
-                    ticketNumber: ticketNumber
+                    ticketNumber
                 })
         );
 
@@ -783,7 +766,7 @@ module.exports = cds.service.impl(function () {
             SELECT.one
                 .from(ServiceTickets)
                 .where({
-                    ticketNumber: ticketNumber
+                    ticketNumber
                 })
         );
 
@@ -798,13 +781,17 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * --------------------------------------------------------
-         * RULE 5:
+         * ========================================================
+         * RULE 5
          * Only Open or InProgress tickets can be updated.
-         * --------------------------------------------------------
+         * ========================================================
          */
 
-        if (!ACTIVE_STATUSES.includes(ticket.status)) {
+        if (
+            !ACTIVE_STATUSES.includes(
+                ticket.status
+            )
+        ) {
 
             return req.reject(
                 409,
@@ -817,7 +804,7 @@ module.exports = cds.service.impl(function () {
 
 
         /*
-         * Add note without deleting previous notes.
+         * Add note while preserving previous notes.
          */
         if (note) {
 
@@ -838,10 +825,17 @@ module.exports = cds.service.impl(function () {
         if (newPriority) {
 
             const cleanPriority =
-                newPriority.trim().toUpperCase();
+                newPriority
+                    .trim()
+                    .toUpperCase();
 
 
-            if (!PRIORITIES.hasOwnProperty(cleanPriority)) {
+            if (
+                !Object.prototype.hasOwnProperty.call(
+                    PRIORITIES,
+                    cleanPriority
+                )
+            ) {
 
                 return req.reject(
                     400,
@@ -855,11 +849,12 @@ module.exports = cds.service.impl(function () {
 
 
             /*
-             * RULE 5:
              * Changing priority recalculates target date.
              */
             changes.targetDate =
-                getTargetDate(cleanPriority);
+                getTargetDate(
+                    cleanPriority
+                );
         }
 
 
@@ -871,32 +866,32 @@ module.exports = cds.service.impl(function () {
             UPDATE(ServiceTickets)
                 .set(changes)
                 .where({
-                    ticketNumber: ticketNumber
+                    ticketNumber
                 })
         );
 
 
-        /*
-         * Return updated ticket information.
-         */
         return {
 
-            ticketNumber:
-                ticketNumber,
+            ticketNumber,
 
             status:
                 ticket.status,
 
             priority:
-                changes.priority || ticket.priority,
+                changes.priority ||
+                ticket.priority,
 
             targetDate:
-                changes.targetDate || ticket.targetDate,
+                changes.targetDate ||
+                ticket.targetDate,
 
             lastNote:
                 note
                     ? note.trim()
-                    : getLastNote(ticket.notes)
+                    : getLastNote(
+                        ticket.notes
+                    )
         };
     });
 
