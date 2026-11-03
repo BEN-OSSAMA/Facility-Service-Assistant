@@ -1,56 +1,76 @@
 _schema-version: 3.3.0
-ID: facility-service-assistant
+
+ID: facility-service-assistant-obk
 version: 1.0.0
-description: "A simple CAP project."
+description: "Facility Service Assistant - Oussama Ben Kacem"
+
 parameters:
   enable-parallel-deployments: true
+
 build-parameters:
   before-all:
     - builder: custom
       commands:
         - npm ci
         - npx cds build --production
+
 modules:
-  - name: facility-service-assistant-srv
+
+  - name: facility-service-assistant-obk-srv
     type: nodejs
     path: gen/srv
+
     parameters:
       instances: 1
       buildpack: nodejs_buildpack
+
     build-parameters:
       builder: npm-ci
+
     provides:
-      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+      - name: srv-api
         properties:
           srv-url: ${default-url}
-    requires:
-      - name: facility-service-assistant-auth
-      - name: facility-service-assistant-db
 
-  - name: facility-service-assistant-db-deployer
+    requires:
+      - name: facility-service-assistant-obk-auth
+      - name: facility-service-assistant-obk-db
+
+
+  - name: facility-service-assistant-obk-db-deployer
     type: hdb
     path: gen/db
+
     parameters:
       buildpack: nodejs_buildpack
+
     requires:
-      - name: facility-service-assistant-db
+      - name: facility-service-assistant-obk-db
+
 
 resources:
-  - name: facility-service-assistant-auth
+
+  - name: facility-service-assistant-obk-auth
     type: org.cloudfoundry.managed-service
+
     parameters:
       service: xsuaa
       service-plan: application
       path: ./xs-security.json
+
       config:
-        xsappname: facility-service-assistant-${org}-${space}
+        xsappname: facility-service-assistant-obk-${org}-${space}
         tenant-mode: dedicated
+
         oauth2-configuration:
           credential-types:
             - "binding-secret"
             - "x509"
-  - name: facility-service-assistant-db
+
+
+  - name: facility-service-assistant-obk-db
     type: com.sap.xs.hdi-container
+
     parameters:
       service: hana
       service-plan: hdi-shared
