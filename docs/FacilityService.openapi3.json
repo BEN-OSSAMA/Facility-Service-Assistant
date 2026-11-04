@@ -1,13 +1,13 @@
 {
   "openapi": "3.0.2",
   "info": {
-    "title": "Facility Service Assistant API",
-    "description": "OData V4 API for managing office equipment and facility service tickets.",
-    "version": "1.0.0"
+    "title": "Use the title annotation on your CDS service to provide a meaningful title.",
+    "description": "Use the Core.LongDescription or Core.Description annotation on your CDS service to provide a meaningful description.",
+    "version": ""
   },
   "x-sap-api-type": "ODATAV4",
   "x-odata-version": "4.01",
-  "x-sap-shortText": "Facility Service Assistant CAP API",
+  "x-sap-shortText": "Use the Core.Description annotation on your CDS service to provide a meaningful short text.",
   "servers": [
     {
       "url": "/facility"
@@ -15,6 +15,43 @@
   ],
   "tags": [],
   "paths": {
+    "/$batch": {
+      "post": {
+        "summary": "Sends a group of requests",
+        "description": "Group multiple requests into a single request payload, see [Batch Requests](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BatchRequests).\n\n*Please note that \"Try it out\" is not supported for this request.*",
+        "tags": [
+          "Batch Requests"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Batch request",
+          "content": {
+            "multipart/mixed;boundary=request-separator": {
+              "schema": {
+                "type": "string"
+              },
+              "example": "--request-separator\nContent-Type: application/http\nContent-Transfer-Encoding: binary\n\nGET undefined HTTP/1.1\nAccept: application/json\n\n\n--request-separator--"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch response",
+            "content": {
+              "multipart/mixed": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "--response-separator\nContent-Type: application/http\n\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{...}\n--response-separator--"
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      }
+    },
     "/createServiceTicket": {
       "post": {
         "summary": "Invokes action createServiceTicket",
@@ -70,6 +107,176 @@
         }
       }
     },
+    "/findEquipment": {
+      "post": {
+        "summary": "Invokes action findEquipment",
+        "tags": [
+          "Service Operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Collection of EquipmentResult",
+                  "properties": {
+                    "@count": {
+                      "$ref": "#/components/schemas/count"
+                    },
+                    "value": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/FacilityService.EquipmentResult"
+                          }
+                        ],
+                        "nullable": true
+                      }
+                    },
+                    "@nextLink": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "URL of the next page in server-driven paging, see [Server-driven Paging](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ServerDrivenPaging)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/error"
+          }
+        },
+        "requestBody": {
+          "description": "Action parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "equipmentId": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "room": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/getEquipmentHistory": {
+      "get": {
+        "summary": "Invokes function getEquipmentHistory",
+        "tags": [
+          "Service Operations"
+        ],
+        "parameters": [
+          {
+            "required": false,
+            "in": "query",
+            "name": "equipmentId",
+            "description": "String value needs to be enclosed in single quotes",
+            "schema": {
+              "type": "string",
+              "maxLength": 20,
+              "nullable": true,
+              "pattern": "^(null|'([^']|'')*')$",
+              "default": "null"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Collection of TicketHistoryItem",
+                  "properties": {
+                    "@count": {
+                      "$ref": "#/components/schemas/count"
+                    },
+                    "value": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/FacilityService.TicketHistoryItem"
+                          }
+                        ],
+                        "nullable": true
+                      }
+                    },
+                    "@nextLink": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "URL of the next page in server-driven paging, see [Server-driven Paging](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ServerDrivenPaging)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      }
+    },
+    "/getTicketStatus": {
+      "get": {
+        "summary": "Invokes function getTicketStatus",
+        "tags": [
+          "Service Operations"
+        ],
+        "parameters": [
+          {
+            "required": false,
+            "in": "query",
+            "name": "ticketNumber",
+            "description": "String value needs to be enclosed in single quotes",
+            "schema": {
+              "type": "string",
+              "maxLength": 20,
+              "nullable": true,
+              "pattern": "^(null|'([^']|'')*')$",
+              "default": "null"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FacilityService.TicketStatusResult"
+                    }
+                  ],
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      }
+    },
     "/updateTicket": {
       "post": {
         "summary": "Invokes action updateTicket",
@@ -121,174 +328,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/getEquipmentHistory(equipmentId='{equipmentId}')": {
-      "get": {
-        "summary": "Invokes function getEquipmentHistory",
-        "tags": [
-          "Service Operations"
-        ],
-        "parameters": [
-          {
-            "required": true,
-            "in": "path",
-            "name": "equipmentId",
-            "description": "Equipment identifier",
-            "schema": {
-              "type": "string",
-              "maxLength": 20,
-              "default": ""
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "title": "Collection of TicketHistoryItem",
-                  "properties": {
-                    "@count": {
-                      "$ref": "#/components/schemas/count"
-                    },
-                    "value": {
-                      "type": "array",
-                      "items": {
-                        "allOf": [
-                          {
-                            "$ref": "#/components/schemas/FacilityService.TicketHistoryItem"
-                          }
-                        ],
-                        "nullable": true
-                      }
-                    },
-                    "@nextLink": {
-                      "type": "string",
-                      "format": "uri",
-                      "description": "URL of the next page in server-driven paging, see [Server-driven Paging](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ServerDrivenPaging)"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "4XX": {
-            "$ref": "#/components/responses/error"
-          }
-        }
-      }
-    },
-    "/getTicketStatus(ticketNumber='{ticketNumber}')": {
-      "get": {
-        "summary": "Invokes function getTicketStatus",
-        "tags": [
-          "Service Operations"
-        ],
-        "parameters": [
-          {
-            "required": true,
-            "in": "path",
-            "name": "ticketNumber",
-            "description": "Ticket number",
-            "schema": {
-              "type": "string",
-              "maxLength": 20,
-              "default": ""
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/FacilityService.TicketStatusResult"
-                    }
-                  ],
-                  "nullable": true
-                }
-              }
-            }
-          },
-          "4XX": {
-            "$ref": "#/components/responses/error"
-          }
-        }
-      }
-    },
-    "/findEquipment(equipmentId='{equipmentId}',room='{room}')": {
-      "get": {
-        "summary": "Invokes function findEquipment",
-        "tags": [
-          "Service Operations"
-        ],
-        "parameters": [
-          {
-            "required": true,
-            "in": "path",
-            "name": "equipmentId",
-            "description": "Equipment identifier",
-            "schema": {
-              "type": "string",
-              "maxLength": 20,
-              "default": ""
-            }
-          },
-          {
-            "required": true,
-            "in": "path",
-            "name": "room",
-            "description": "Equipment room",
-            "schema": {
-              "type": "string",
-              "maxLength": 100,
-              "default": ""
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "title": "Collection of EquipmentResult",
-                  "properties": {
-                    "@count": {
-                      "$ref": "#/components/schemas/count"
-                    },
-                    "value": {
-                      "type": "array",
-                      "items": {
-                        "allOf": [
-                          {
-                            "$ref": "#/components/schemas/FacilityService.EquipmentResult"
-                          }
-                        ],
-                        "nullable": true
-                      }
-                    },
-                    "@nextLink": {
-                      "type": "string",
-                      "format": "uri",
-                      "description": "URL of the next page in server-driven paging, see [Server-driven Paging](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ServerDrivenPaging)"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "4XX": {
-            "$ref": "#/components/responses/error"
           }
         }
       }

@@ -66,10 +66,10 @@ service FacilityService {
      * - room
      */
 
-    function findEquipment(
-        equipmentId : String(20),
-        room        : String(100)
-    ) returns many EquipmentResult;
+    action findEquipment(
+    equipmentId : String(20),
+    room        : String(100)
+) returns many EquipmentResult;
 
 
     /*
